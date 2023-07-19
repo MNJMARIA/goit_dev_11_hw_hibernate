@@ -1,3 +1,4 @@
+/*
 import client.Client;
 import database.DatabaseInitService;
 import hibernate.HibernateUtil;
@@ -67,3 +68,4 @@ public class App {
 
     }
 }
+*/
