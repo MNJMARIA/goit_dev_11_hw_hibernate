@@ -11,31 +11,41 @@ public class ClientCrudService implements IClientCrudService{
     private PreparedStatement createSt;
     private PreparedStatement deleteSt;
     private PreparedStatement getIdByNameSt;
-    private PreparedStatement listAllSt;
     private PreparedStatement getByIdSt;
     private PreparedStatement getAllSt;
 
-    public ClientCrudService(Connection connection) throws SQLException {
-        createSt = connection
-                .prepareStatement("INSERT INTO client (name) VALUES (?)");
+    public ClientCrudService(Connection connection){
+        try{
+            createSt = connection
+                    .prepareStatement("INSERT INTO client (name) VALUES (?)");
 
-        deleteSt = connection
-                .prepareStatement("DELETE FROM client WHERE id = ?");
+            deleteSt = connection
+                    .prepareStatement("DELETE FROM client WHERE id = ?");
 
-        getIdByNameSt = connection
-                .prepareStatement("SELECT id FROM client WHERE name = ?");
+            getIdByNameSt = connection
+                    .prepareStatement("SELECT id FROM client WHERE name = ?");
 
-        getAllSt = connection
-                .prepareStatement("SELECT id, name FROM client");
+            getAllSt = connection
+                    .prepareStatement("SELECT id, name FROM client");
 
-        getByIdSt = connection
-                .prepareStatement("SELECT id, name FROM client WHERE id = ?");
+            getByIdSt = connection
+                    .prepareStatement("SELECT id, name FROM client WHERE id = ?");
+
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void create(String name) throws SQLException {
-        createSt.setString(1, name);
-        createSt.executeUpdate();
+    public void create(String name){
+        try{
+            createSt.setString(1, name);
+
+            createSt.executeUpdate();
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
     }
     public long getIdByName(String name){
         try{
@@ -48,10 +58,9 @@ public class ClientCrudService implements IClientCrudService{
                 long id = rs.getLong("id");
                 return id;
             }
-        }catch(SQLException e){
+        } catch(SQLException e){
             throw new RuntimeException(e);
         }
-
     }
 
     @Override
@@ -90,9 +99,13 @@ public class ClientCrudService implements IClientCrudService{
     }
 
     @Override
-    public void delete(long id) throws SQLException {
-        deleteSt.setLong(1, id);
+    public void delete(long id){
+        try{
+            deleteSt.setLong(1, id);
 
-        deleteSt.executeUpdate();
+            deleteSt.executeUpdate();
+        }catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

@@ -15,37 +15,50 @@ public class PlanetCrudService implements IPlanetCrudService{
 
     private PreparedStatement deleteSt;
 
-    public PlanetCrudService(Connection connection) throws SQLException {
-        createSt = connection
-                .prepareStatement("INSERT INTO planet (id, name) VALUES (?, ?)");
+    public PlanetCrudService(Connection connection){
+        try{
+            createSt = connection
+                    .prepareStatement("INSERT INTO planet (id, name) VALUES (?, ?)");
 
-        deleteSt = connection
-                .prepareStatement("DELETE FROM planet WHERE id = ?");
+            deleteSt = connection
+                    .prepareStatement("DELETE FROM planet WHERE id = ?");
 
-        getByIdSt = connection
-                .prepareStatement("SELECT id, name FROm planet WHERE id = ?");
+            getByIdSt = connection
+                    .prepareStatement("SELECT id, name FROm planet WHERE id = ?");
 
-        getAllSt = connection.prepareStatement("SELECT id, name FROM planet");
+            getAllSt = connection.prepareStatement("SELECT id, name FROM planet");
+
+        }catch(SQLException e){
+            throw new RuntimeException (e);
+        }
     }
 
     @Override
-    public void create(Planet planet) throws SQLException {
-        createSt.setString(1, planet.getId());
-        createSt.setString(2, planet.getName());
+    public void create(Planet planet){
+        try{
+            createSt.setString(1, planet.getId());
+            createSt.setString(2, planet.getName());
 
-        createSt.executeUpdate();
+            createSt.executeUpdate();
+        } catch(SQLException e){
+            throw new RuntimeException (e);
+        }
     }
 
     @Override
-    public String getById(String id) throws SQLException {
-        getByIdSt.setString(1, id);
+    public String getById(String id){
+        try{
+            getByIdSt.setString(1, id);
 
-        try(ResultSet rs = getByIdSt.executeQuery()){
-            if(!rs.next()){
-                return null;
+            try(ResultSet rs = getByIdSt.executeQuery()){
+                if(!rs.next()){
+                    return null;
+                }
+                String name = rs.getString("name");
+                return name;
             }
-            String name = rs.getString("name");
-            return name;
+        } catch(SQLException e){
+            throw new RuntimeException (e);
         }
     }
 
@@ -69,9 +82,13 @@ public class PlanetCrudService implements IPlanetCrudService{
     }
 
     @Override
-    public void delete(String id) throws SQLException {
-        deleteSt.setString(1, id);
+    public void delete(String id){
+        try{
+            deleteSt.setString(1, id);
 
-        deleteSt.executeUpdate();
+            deleteSt.executeUpdate();
+        } catch(SQLException e){
+            throw new RuntimeException (e);
+        }
     }
 }

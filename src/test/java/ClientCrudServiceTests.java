@@ -14,7 +14,7 @@ public class ClientCrudServiceTests {
     private long idOfCreatedClientWeiWuxian = clientCrudService.getIdByName("Wei Wuxian");
 
     @BeforeAll
-    public static void initDb() throws SQLException {
+    public static void initDb(){
         DatabaseInitService databaseInitService = new DatabaseInitService();
         databaseInitService.initDb();
         connection = Database.getInstance().getConnection();
@@ -27,7 +27,7 @@ public class ClientCrudServiceTests {
     }
 
     @Test
-    public void testThatMethodCreateWeiWuxianWorksOk() throws SQLException {
+    public void testThatMethodCreateWeiWuxianWorksOk(){
         clientCrudService.create("Wei Wuxian");
         idOfCreatedClientWeiWuxian = clientCrudService.getIdByName("Wei Wuxian");
 
@@ -70,7 +70,7 @@ public class ClientCrudServiceTests {
     }
 
     @Test
-    public void testThatMethodDeleteWorksOk() throws SQLException {
+    public void testThatMethodDeleteWorksOk(){
         long clientIdToDelete = clientCrudService.getIdByName("Wei Wuxian");
         clientCrudService.delete(clientIdToDelete);
 
