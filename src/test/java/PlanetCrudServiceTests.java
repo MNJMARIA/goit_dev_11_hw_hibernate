@@ -21,10 +21,10 @@ public class PlanetCrudServiceTests {
         connection = Database.getInstance().getConnection();
         planetCrudService = new PlanetCrudService(connection);
     }
-    @AfterAll
+    /*@AfterAll
     public static void closeConnection() throws SQLException {
         connection.close();
-    }
+    }*/
 
     @Test
     public void testThatMethodCreatePlanetFantasyWorksOk(){

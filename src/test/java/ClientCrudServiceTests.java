@@ -21,10 +21,10 @@ public class ClientCrudServiceTests {
         clientCrudService = new ClientCrudService(connection);
 
     }
-    @AfterAll
+   /* @AfterAll
     public static void closeConnection() throws SQLException {
         connection.close();
-    }
+    }*/
 
     @Test
     public void testThatMethodCreateWeiWuxianWorksOk(){
