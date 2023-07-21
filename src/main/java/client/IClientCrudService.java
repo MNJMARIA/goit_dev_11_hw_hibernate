@@ -4,8 +4,10 @@ import java.sql.SQLException;
 import java.util.List;
 
 public interface IClientCrudService {
-    void create(String name);
-    String getById(long id);
+    Client create(String name);
+    Client getById(long id);
+    Client update(long id, String name);
+    long getIdByName(String name);
     List<Client> getAll();
-    void delete(long id);
+    boolean delete(long id);
 }

@@ -1,94 +1,76 @@
 package planet;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import hibernate.HibernateUtil;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
 import java.util.List;
+import java.util.UUID;
 
 public class PlanetCrudService implements IPlanetCrudService{
-    private PreparedStatement createSt;
-    private PreparedStatement getByIdSt;
 
-    private PreparedStatement getAllSt;
-
-    private PreparedStatement deleteSt;
-
-    public PlanetCrudService(Connection connection){
-        try{
-            createSt = connection
-                    .prepareStatement("INSERT INTO planet (id, name) VALUES (?, ?)");
-
-            deleteSt = connection
-                    .prepareStatement("DELETE FROM planet WHERE id = ?");
-
-            getByIdSt = connection
-                    .prepareStatement("SELECT id, name FROm planet WHERE id = ?");
-
-            getAllSt = connection.prepareStatement("SELECT id, name FROM planet");
-
-        }catch(SQLException e){
-            throw new RuntimeException (e);
+    @Override
+    public Planet create(Planet planet) {
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction = session.beginTransaction();
+            Planet newPlanet = new Planet();
+            newPlanet.setName(planet.getName());
+            newPlanet.setId(UUID.randomUUID().toString().replace("-", "").toUpperCase());
+            session.persist(newPlanet);
+            transaction.commit();
+            return newPlanet;
         }
     }
 
     @Override
-    public void create(Planet planet){
-        try{
-            createSt.setString(1, planet.getId());
-            createSt.setString(2, planet.getName());
-
-            createSt.executeUpdate();
-        } catch(SQLException e){
-            throw new RuntimeException (e);
+    public Planet getById(String id) {
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            return session.get(Planet.class, id);
         }
     }
 
     @Override
-    public String getById(String id){
-        try{
-            getByIdSt.setString(1, id);
-
-            try(ResultSet rs = getByIdSt.executeQuery()){
-                if(!rs.next()){
-                    return null;
-                }
-                String name = rs.getString("name");
-                return name;
-            }
-        } catch(SQLException e){
-            throw new RuntimeException (e);
+    public String getIdByName(String name) {
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Planet planet = session.createQuery("FROM Planet WHERE name = :name", Planet.class)
+                    .setParameter("name", name)
+                    .uniqueResult();
+            return planet != null ? planet.getId() : "";
         }
     }
 
     @Override
     public List<Planet> getAll() {
-        try(ResultSet rs = getAllSt.executeQuery()){
-            List<Planet> planets = new ArrayList<>();
-
-            while(rs.next()){
-                Planet planet = new Planet();
-                planet.setId(rs.getString("id"));
-                planet.setName(rs.getString("name"));
-
-                planets.add(planet);
-            }
-            return planets;
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            return session.createQuery("FROM Planet", Planet.class).list();
         }
     }
 
     @Override
-    public void delete(String id){
-        try{
-            deleteSt.setString(1, id);
+    public Planet update(String id, String name) {
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction = session.beginTransaction();
+            Planet planetToUpdate = session.get(Planet.class, id);
+            if (planetToUpdate != null) {
+                planetToUpdate.setName(name);
+                session.persist(planetToUpdate);
+                transaction.commit();
+            }
+            return planetToUpdate;
+        }
+    }
 
-            deleteSt.executeUpdate();
-        } catch(SQLException e){
-            throw new RuntimeException (e);
+    @Override
+    public boolean delete(String id) {
+        try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction = session.beginTransaction();
+                Planet planetToDelete = session.get(Planet.class, id);
+                if(planetToDelete != null){
+                    session.remove(planetToDelete);
+                    transaction.commit();
+                    return true;
+                }
+            return false;
         }
     }
 }

@@ -1,79 +1,107 @@
 import client.Client;
 import client.ClientCrudService;
-import database.Database;
+import client.IClientCrudService;
 import database.DatabaseInitService;
 import org.junit.jupiter.api.*;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 public class ClientCrudServiceTests {
-    private static Connection connection;
-    private static ClientCrudService clientCrudService;
-    private long idOfCreatedClientWeiWuxian = clientCrudService.getIdByName("Wei Wuxian");
+    private IClientCrudService clientCrudService;
 
-    @BeforeAll
-    public static void initDb(){
-        DatabaseInitService databaseInitService = new DatabaseInitService();
-        databaseInitService.initDb();
-        connection = Database.getInstance().getConnection();
-        clientCrudService = new ClientCrudService(connection);
-
-    }
-   /* @AfterAll
-    public static void closeConnection() throws SQLException {
-        connection.close();
-    }*/
-
-    @Test
-    public void testThatMethodCreateWeiWuxianWorksOk(){
-        clientCrudService.create("Wei Wuxian");
-        idOfCreatedClientWeiWuxian = clientCrudService.getIdByName("Wei Wuxian");
-
-        Assertions.assertNotNull(idOfCreatedClientWeiWuxian);
+    @BeforeEach
+    public void beforeEach(){
+        new DatabaseInitService().initDb();
+        clientCrudService = new ClientCrudService();
     }
 
     @Test
-    public void testThatMethodGetById1WorksOk(){
-        String actual = clientCrudService.getById(1);
-        String expected = "Adel";
+    public void testCreateClientWorksOk(){
+        String clientName = "Wei Wuxian";
 
-        Assertions.assertEquals(expected, actual);
+        Client createdClient = clientCrudService.create(clientName);
+
+        Assertions.assertNotNull(createdClient.getId());
+        Assertions.assertEquals(clientName, createdClient.getName());
+
+        // Clean up
+        clientCrudService.delete(createdClient.getId());
     }
 
     @Test
-    public void testThatMethodGetById5WorksOk(){
-        String actual = clientCrudService.getById(5);
-        String expected = "Mariia";
+    public void testGetClientById1WorksOk(){
+        long existingClientId = 1;
 
-        Assertions.assertEquals(expected, actual);
+        Client actualClient = clientCrudService.getById(existingClientId);
+
+        //info about existing client
+        Client expectedClient = new Client();
+        expectedClient.setId(existingClientId);
+        expectedClient.setName("Adel");
+
+        Assertions.assertNotNull(actualClient);
+        Assertions.assertEquals(existingClientId, actualClient.getId());
+        Assertions.assertEquals(expectedClient, actualClient);
     }
 
     @Test
-    public void testThatMethodGetById11WorksOk(){
-        String actual = clientCrudService.getById(idOfCreatedClientWeiWuxian);
-        String expected = "Wei Wuxian";
+    public void testGetClientById5WorksOk(){
+        long existingClientId = 5;
 
-        Assertions.assertEquals(expected, actual);
+        Client actualClient = clientCrudService.getById(existingClientId);
+
+        //info about existing client
+        Client expectedClient = new Client();
+        expectedClient.setId(existingClientId);
+        expectedClient.setName("Mariia");
+
+        Assertions.assertNotNull(actualClient);
+        Assertions.assertEquals(existingClientId, actualClient.getId());
+        Assertions.assertEquals(expectedClient, actualClient);
     }
 
     @Test
-    public void testThatMethodGetAllWorksOk(){
-        List<Client> actual = clientCrudService.getAll();
-        //migration add 10 clients
-        int expected = 10;
+    public void testGetAllClientsWorksOk(){
+        List<Client> clients = clientCrudService.getAll();
 
-        Assertions.assertEquals(expected, actual.size());
-        Assertions.assertNotNull(actual);
-        Assertions.assertFalse(actual.isEmpty());
+        Assertions.assertNotNull(clients);
+        Assertions.assertFalse(clients.isEmpty());
+        // Check if there are exactly 10 clients (created by migration)
+        Assertions.assertEquals(10, clients.size());
+    }
+    @Test
+    public void testGetClientIdByNameWorksOk(){
+        String existingClientName = "Bell";
+
+        long actualClientId = clientCrudService.getIdByName(existingClientName);
+        long expectedClientId = 2;
+
+        Assertions.assertNotEquals(-1, actualClientId);
+        Assertions.assertEquals(expectedClientId, actualClientId);
+    }
+    @Test
+    public void testUpdateClientWorksOk(){
+        String originalName = "Lan Wanji";
+        String updatedName = "New Lan Wanji";
+
+        Client createdClient = clientCrudService.create(originalName);
+
+        Client updatedClient = clientCrudService.update(createdClient.getId(), updatedName);
+
+        Assertions.assertNotNull(updatedClient);
+        Assertions.assertEquals(updatedName, updatedClient.getName());
+
+        clientCrudService.delete(updatedClient.getId());
     }
 
-    @Test
-    public void testThatMethodDeleteWorksOk(){
-        long clientIdToDelete = clientCrudService.getIdByName("Wei Wuxian");
-        clientCrudService.delete(clientIdToDelete);
+   @Test
+    public void testDeleteClientWorksOk(){
+       String clientName = "NEWCLIENTTODELETE";
+       Client createdClient = clientCrudService.create(clientName);
 
-        Assertions.assertNull(clientCrudService.getById(clientIdToDelete));
+       boolean isDeleted = clientCrudService.delete(createdClient.getId());
+
+       Assertions.assertTrue(isDeleted);
+       Assertions.assertNull(clientCrudService.getById(createdClient.getId()));
     }
 }

@@ -1,111 +1,71 @@
 package client;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
+import hibernate.HibernateUtil;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import java.util.List;
 
 public class ClientCrudService implements IClientCrudService{
-    private PreparedStatement createSt;
-    private PreparedStatement deleteSt;
-    private PreparedStatement getIdByNameSt;
-    private PreparedStatement getByIdSt;
-    private PreparedStatement getAllSt;
-
-    public ClientCrudService(Connection connection){
-        try{
-            createSt = connection
-                    .prepareStatement("INSERT INTO client (name) VALUES (?)");
-
-            deleteSt = connection
-                    .prepareStatement("DELETE FROM client WHERE id = ?");
-
-            getIdByNameSt = connection
-                    .prepareStatement("SELECT id FROM client WHERE name = ?");
-
-            getAllSt = connection
-                    .prepareStatement("SELECT id, name FROM client");
-
-            getByIdSt = connection
-                    .prepareStatement("SELECT id, name FROM client WHERE id = ?");
-
-        }catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
-    public void create(String name){
-        try{
-            createSt.setString(1, name);
-
-            createSt.executeUpdate();
-        }catch (SQLException e) {
-            throw new RuntimeException(e);
+    public Client create(String name){
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction = session.beginTransaction();
+                Client newClient = new Client();
+                newClient.setName(name);
+                session.persist(newClient);
+            transaction.commit();
+            return newClient;
         }
-
     }
+    @Override
     public long getIdByName(String name){
-        try{
-            getIdByNameSt.setString(1, name);
-
-            try (ResultSet rs = getIdByNameSt.executeQuery()) {
-                if (!rs.next()) {
-                    return -1;
-                }
-                long id = rs.getLong("id");
-                return id;
-            }
-        } catch(SQLException e){
-            throw new RuntimeException(e);
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Client client = session.createQuery("FROM Client WHERE name = :name", Client.class)
+                    .setParameter("name", name)
+                    .uniqueResult();
+            return client != null ? client.getId() : -1;
         }
     }
 
     @Override
-    public String getById(long id) {
-        try{
-        getByIdSt.setLong(1, id);
-
-            try(ResultSet rs = getByIdSt.executeQuery() ) {
-                if (!rs.next()) {
-                    return null;
-                }
-                String name = rs.getString("name");
-                return name;
-            }
-
-        }catch(SQLException e){
-            throw new RuntimeException(e);
+    public Client getById(long id) {
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            return session.get(Client.class, id);
         }
     }
 
     @Override
     public List<Client> getAll() {
-        try(ResultSet rs = getAllSt.executeQuery()){
-            List<Client> clients = new ArrayList<>();
-
-            while(rs.next()){
-                Client client = new Client();
-                client.setId(rs.getLong("id"));
-                client.setName(rs.getString("name"));
-                clients.add(client);
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            return session.createQuery("FROM Client", Client.class).list();
+        }
+    }
+    @Override
+    public Client update(long id, String name){
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction= session.beginTransaction();
+            Client clientToUpdate = session.get(Client.class, id);
+            if(clientToUpdate != null){
+                clientToUpdate.setName(name);
+                session.persist(clientToUpdate);
+                transaction.commit();
+                return clientToUpdate;
             }
-            return clients;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+            return null;
         }
     }
 
     @Override
-    public void delete(long id){
-        try{
-            deleteSt.setLong(1, id);
-
-            deleteSt.executeUpdate();
-        }catch (SQLException e) {
-            throw new RuntimeException(e);
+    public boolean delete(long id){
+        try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            Transaction transaction = session.beginTransaction();
+            Client clientToDelete = session.get(Client.class,id);
+            if(clientToDelete != null){
+                session.remove(clientToDelete);
+                transaction.commit();
+                return true;
+            }
+            return false;
         }
     }
 }

@@ -1,82 +1,122 @@
-import client.Client;
-import client.ClientCrudService;
-import database.Database;
 import database.DatabaseInitService;
 import org.junit.jupiter.api.*;
+import planet.IPlanetCrudService;
 import planet.Planet;
 import planet.PlanetCrudService;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.List;
 
 public class PlanetCrudServiceTests {
-    private static Connection connection;
-    private static PlanetCrudService planetCrudService;
+    private IPlanetCrudService planetCrudService;
 
-    @BeforeAll
-    public static void initDb(){
-        DatabaseInitService databaseInitService = new DatabaseInitService();
-        databaseInitService.initDb();
-        connection = Database.getInstance().getConnection();
-        planetCrudService = new PlanetCrudService(connection);
+    @BeforeEach
+    public void beforeEach(){
+        new DatabaseInitService().initDb();
+        planetCrudService = new PlanetCrudService();
     }
-    /*@AfterAll
-    public static void closeConnection() throws SQLException {
-        connection.close();
-    }*/
 
     @Test
-    public void testThatMethodCreatePlanetFantasyWorksOk(){
-        Planet newPlanet =new Planet();
+    public void testCreatePlanetWorksOk(){
+        Planet newPlanet = new Planet();
         newPlanet.setId("FANTASY");
         newPlanet.setName("Fantasy");
-        planetCrudService.create(newPlanet);
 
-        Assertions.assertNotNull(planetCrudService.getById("FANTASY"));
+        Planet createdPlanet = planetCrudService.create(newPlanet);
+
+        Assertions.assertNotNull(createdPlanet.getId());
+        Assertions.assertEquals("Fantasy", createdPlanet.getName());
+
+        // Clean up
+        planetCrudService.delete(createdPlanet.getId());
     }
 
     @Test
-    public void testThatMethodGetPlanetEarthByIdWorksOk(){
-        String actual = planetCrudService.getById("EARTH");
-        String expected = "Earth";
+    public void testGetPlanetEarthByIdWorksOk(){
+        String existingPlanetId = "EARTH";
 
-        Assertions.assertEquals(expected, actual);
+        Planet actualPlanet = planetCrudService.getById(existingPlanetId);
+
+        //info about existing planet
+        Planet expectedPlanet = new Planet();
+        expectedPlanet.setId(existingPlanetId);
+        expectedPlanet.setName("Earth");
+
+        Assertions.assertNotNull(actualPlanet);
+        Assertions.assertEquals(existingPlanetId, actualPlanet.getId());
+        Assertions.assertEquals(expectedPlanet, actualPlanet);
     }
 
     @Test
-    public void testThatMethodGetPlanetNeptuneById5WorksOk(){
-        String actual = planetCrudService.getById("NEPTUNE");
-        String expected = "Neptune";
+    public void testGetPlanetNeptuneByIdWorksOk(){
+        String existingPlanetId = "NEPTUNE";
 
-        Assertions.assertEquals(expected, actual);
+        Planet actualPlanet = planetCrudService.getById(existingPlanetId);
+
+        //info about existing planet
+        Planet expectedPlanet = new Planet();
+        expectedPlanet.setId(existingPlanetId);
+        expectedPlanet.setName("Neptune");
+
+        Assertions.assertNotNull(actualPlanet);
+        Assertions.assertEquals(existingPlanetId, actualPlanet.getId());
+        Assertions.assertEquals(expectedPlanet, actualPlanet);
     }
 
     @Test
-    public void testThatMethodGetPlanetFantasyByIdWorksOk(){
-        String actual = planetCrudService.getById("FANTASY");
-        String expected = "Fantasy";
+    public void testGetPlanetFantasyByIdWorksOk(){
+        String notExistingPlanetId = "FANTASY";
 
-        Assertions.assertEquals(expected, actual);
+        Planet actualPlanet = planetCrudService.getById(notExistingPlanetId);
+
+        Assertions.assertNull(actualPlanet);
     }
 
     @Test
-    public void testThatMethodGetAllWorksOk(){
-        List<Planet> actual = planetCrudService.getAll();
-        //8 planets in database(created by migration)
-        int expected = 8;
+    public void testGetAllPlanetsWorksOk(){
+        List<Planet> planets = planetCrudService.getAll();
 
-        Assertions.assertEquals(expected, actual.size());
-        Assertions.assertNotNull(actual);
-        Assertions.assertFalse(actual.isEmpty());
+        Assertions.assertNotNull(planets);
+        Assertions.assertFalse(planets.isEmpty());
+        // Check if there are exactly 8 planets (created by migration)
+        Assertions.assertEquals(8, planets.size());
     }
-
-    //TODO does not delete
     @Test
-    public void testThatMethodDeleteWorksOk(){
-        String planetIdToDelete = "FANTASY";
-        planetCrudService.delete(planetIdToDelete);
+    public void testGetPlanetIdByNameWorksOk(){
+        String existingPlanetName = "Venus";
 
-        Assertions.assertNull(planetCrudService.getById(planetIdToDelete));
+        String actualPlanetId = planetCrudService.getIdByName(existingPlanetName);
+        String expectedPlanetId = "VENUS";
+
+        //Assertions.assertNotNull(actualPlanetId);
+        Assertions.assertEquals(expectedPlanetId, actualPlanetId);
+    }
+    @Test
+    public void testUpdatePlanetWorksOk(){
+        Planet planet = new Planet();
+        planet.setId("PLANETX");
+        planet.setName("PlanetX");
+        String updatedName = "NewPlanetX";
+
+        Planet createdPlanet = planetCrudService.create(planet);
+
+        Planet updatedPlanet = planetCrudService.update(createdPlanet.getId(), updatedName);
+
+        Assertions.assertNotNull(updatedPlanet);
+        Assertions.assertEquals(updatedName, updatedPlanet.getName());
+
+        planetCrudService.delete(updatedPlanet.getId());
+    }
+    @Test
+    public void testDeletePlanetWorksOk(){
+        Planet newPlanet = new Planet();
+        newPlanet.setId("NEWID");
+        newPlanet.setName("NewPlanet");
+
+        Planet createdPlanet = planetCrudService.create(newPlanet);
+
+        boolean isDeleted = planetCrudService.delete(createdPlanet.getId());
+
+        Assertions.assertTrue(isDeleted);
+        Assertions.assertNull(planetCrudService.getById(createdPlanet.getId()));
     }
 }
