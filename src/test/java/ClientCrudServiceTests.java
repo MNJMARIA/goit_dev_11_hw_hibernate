@@ -85,7 +85,6 @@ public class ClientCrudServiceTests {
         String updatedName = "New Lan Wanji";
 
         Client createdClient = clientCrudService.create(originalName);
-
         Client updatedClient = clientCrudService.update(createdClient.getId(), updatedName);
 
         Assertions.assertNotNull(updatedClient);
