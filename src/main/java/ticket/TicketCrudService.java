@@ -47,6 +47,42 @@ public class TicketCrudService implements ITicketCrudService{
             e.printStackTrace();
             return null;
         }
+
+
+        //АБО ВАРІАНТ МЕНТОРА(не проходить тести)
+        /* try (Session session = HibernateUtil.getInstance().getSessionFactory().openSession()) {
+            Transaction transaction = session.beginTransaction();
+            Ticket newTicket = new Ticket();
+            newTicket.setCreatedAt(LocalDateTime.now());
+
+            long clientId = ticket.getClient().getId();
+            if(clientId != 0 && clientCrudService.getById(clientId) != null ){
+                newTicket.setClient(ticket.getClient());
+            } else {
+                Client newClient = clientCrudService.create(ticket.getClient());
+                newTicket.setClient(newClient);
+            }
+
+            String fromPlanetId = ticket.getFromPlanet().getId();
+            if(fromPlanetId != null && planetCrudService.getById(fromPlanetId) != null ){
+                newTicket.setFromPlanet(ticket.getFromPlanet());
+            } else {
+                Planet newPlanet = planetCrudService.create(ticket.getFromPlanet());
+                newTicket.setFromPlanet(newPlanet);
+            }
+
+            String toPlanetId = ticket.getToPlanet().getId();
+            if(toPlanetId != null && planetCrudService.getById(toPlanetId) != null ){
+                newTicket.setToPlanet(ticket.getToPlanet());
+            } else {
+                Planet newPlanet = planetCrudService.create(ticket.getToPlanet());
+                newTicket.setToPlanet(newPlanet);
+            }
+            session.persist(newTicket);
+            transaction.commit();
+            return newTicket;
+        }*/
+
     }
 
     @Override
