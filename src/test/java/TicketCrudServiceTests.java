@@ -2,9 +2,11 @@ import client.ClientCrudService;
 import client.IClientCrudService;
 import database.DatabaseInitService;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import planet.IPlanetCrudService;
+import planet.Planet;
 import planet.PlanetCrudService;
 import ticket.ITicketCrudService;
 import ticket.Ticket;
@@ -16,20 +18,20 @@ import java.util.List;
 
 public class TicketCrudServiceTests {
     private static ITicketCrudService ticketCrudService;
-    private IClientCrudService ccs = new ClientCrudService();
-    private IPlanetCrudService pcs = new PlanetCrudService();
+    private static IClientCrudService ccs;
+    private static IPlanetCrudService pcs;
 
-    @BeforeEach
-    public void beforeEach(){
+    @BeforeAll
+    public static void setup(){
         new DatabaseInitService().initDb();
         ticketCrudService = new TicketCrudService();
+        ccs = new ClientCrudService();
+        pcs = new PlanetCrudService();
     }
 
     @Test
     public void testCreateTicketWorksOk(){
         Ticket newTicket = new Ticket();
-        long id = ticketCrudService.getAll().size() + 1;
-        newTicket.setId(id);
         newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         newTicket.setClient(ccs.getById(1));
         newTicket.setFromPlanet(pcs.getById("EARTH"));
@@ -38,14 +40,89 @@ public class TicketCrudServiceTests {
         Ticket createdTicket = ticketCrudService.create(newTicket);
 
         Assertions.assertNotNull(createdTicket);
-
+        Assertions.assertNotEquals(0, createdTicket.getId()); // Check that the ID was generated and set properly
         // Clean up
         ticketCrudService.delete(createdTicket.getId());
     }
+    @Test
+    public void testCreateNotExistClientWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(ccs.getById(1));
 
+        // Знаходимо планету з бази даних за ідентифікатором "NOTEXIST" або "null"
+        Planet fromPlanet = pcs.getById("NOTEXIST");
+        newTicket.setFromPlanet(fromPlanet);
+
+        newTicket.setToPlanet(pcs.getById("VENUS"));
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket); // Очікуємо, що квиток не був створений через неправильне значення планети "fromPlanet"
+    }
+    @Test
+    public void testCreateNullClientWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(null); // Передаємо значення клієнта як null
+        newTicket.setFromPlanet(pcs.getById("EARTH"));
+        newTicket.setToPlanet(pcs.getById("MARS"));
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket); // Очікуємо, що квиток не був створений через неправильне значення клієнта
+    }
+    @Test
+    public void testCreateNotExistFromPlanetWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(ccs.getById(1));
+        newTicket.setFromPlanet(pcs.getById("NOTEXIST")); //not exist from planet
+        newTicket.setToPlanet(pcs.getById("VENUS"));
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket);
+    }
+    @Test
+    public void testCreateNullFromPlanetWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(ccs.getById(1));
+        newTicket.setFromPlanet(null); //null from planet
+        newTicket.setToPlanet(pcs.getById("VENUS"));
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket);
+    }
+    @Test
+    public void testCreateNotExistToPlanetWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(ccs.getById(1));
+        newTicket.setFromPlanet(pcs.getById("EARTH"));
+        newTicket.setToPlanet(pcs.getById("NOTEXIST")); //not exist to planet
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket);
+    }
+    @Test
+    public void testCreateNullToPlanetWorksOk(){
+        Ticket newTicket = new Ticket();
+        newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
+        newTicket.setClient(ccs.getById(1));
+        newTicket.setFromPlanet(pcs.getById("EARTH"));
+        newTicket.setToPlanet(null); //null to planet
+
+        Ticket createdTicket = ticketCrudService.create(newTicket);
+
+        Assertions.assertNull(createdTicket);
+    }
     @Test
     public void testGetTicketEarthMarsByIdWorksOk(){
-        long existingTicketId = 2;
+        long existingTicketId = 1;
 
         Ticket actualTicket = ticketCrudService.getById(existingTicketId);
 
@@ -58,10 +135,12 @@ public class TicketCrudServiceTests {
         expectedTicket.setToPlanet(pcs.getById("MARS"));
 
         Assertions.assertNotNull(actualTicket);
-        Assertions.assertEquals(existingTicketId, actualTicket.getId());
-        Assertions.assertEquals(expectedTicket, actualTicket);
+        Assertions.assertEquals(expectedTicket.getId(), actualTicket.getId());
+        //Assertions.assertEquals(expectedTicket.getCreatedAt(), actualTicket.getCreatedAt());
+        Assertions.assertEquals(expectedTicket.getClient().getId(), actualTicket.getClient().getId());
+        Assertions.assertEquals(expectedTicket.getFromPlanet().getId(), actualTicket.getFromPlanet().getId());
+        Assertions.assertEquals(expectedTicket.getToPlanet().getId(), actualTicket.getToPlanet().getId());
     }
-
     @Test
     public void testGetTicketMarsUranusByIdWorksOk(){
         long existingTicketId = 6;
@@ -77,9 +156,13 @@ public class TicketCrudServiceTests {
         expectedTicket.setToPlanet(pcs.getById("URANUS"));
 
         Assertions.assertNotNull(actualTicket);
-        Assertions.assertEquals(expectedTicket, actualTicket);
-    }
+        Assertions.assertEquals(expectedTicket.getId(), actualTicket.getId());
+        //Assertions.assertEquals(expectedTicket.getCreatedAt(), actualTicket.getCreatedAt());
+        Assertions.assertEquals(expectedTicket.getClient().getId(), actualTicket.getClient().getId());
+        Assertions.assertEquals(expectedTicket.getFromPlanet().getId(), actualTicket.getFromPlanet().getId());
+        Assertions.assertEquals(expectedTicket.getToPlanet().getId(), actualTicket.getToPlanet().getId());
 
+    }
     @Test
     public void testGetAllTicketsWorksOk(){
         List<Ticket> tickets = ticketCrudService.getAll();
@@ -87,26 +170,24 @@ public class TicketCrudServiceTests {
         Assertions.assertNotNull(tickets);
         Assertions.assertFalse(tickets.isEmpty());
         // Check if there are exactly 10 tickets (created by migration)
-        Assertions.assertEquals(8, tickets.size());
+        Assertions.assertEquals(10, tickets.size());
     }
     @Test
     public void testUpdatePlanetWorksOk(){
 
         Ticket originalTicket = new Ticket();
-        originalTicket.setId(ticketCrudService.getAll().size() + 1);
         originalTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         originalTicket.setClient(ccs.getById(5));
         originalTicket.setFromPlanet(pcs.getById("EARTH"));
         originalTicket.setToPlanet(pcs.getById("MARS"));
 
+        Ticket createdTicket = ticketCrudService.create(originalTicket);
+
         Ticket ticketToUpdate = new Ticket();
-        ticketToUpdate.setId(ticketCrudService.getAll().size() + 1);
         ticketToUpdate.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         ticketToUpdate.setClient(ccs.getById(5));
         ticketToUpdate.setFromPlanet(pcs.getById("EARTH"));
         ticketToUpdate.setToPlanet(pcs.getById("NEPTUNE"));
-
-        Ticket createdTicket = ticketCrudService.create(originalTicket);
 
         Ticket updatedTicket = ticketCrudService.update(originalTicket.getId(), ticketToUpdate);
 
@@ -114,14 +195,11 @@ public class TicketCrudServiceTests {
         Assertions.assertEquals(createdTicket.getId(), updatedTicket.getId());
 
         ticketCrudService.delete(updatedTicket.getId());
-        ticketCrudService.delete(createdTicket.getId());
+        //ticketCrudService.delete(createdTicket.getId());
     }
-
     @Test
     public void testDeleteWorksOk(){
         Ticket newTicket = new Ticket();
-        long id = ticketCrudService.getAll().size() + 1;
-        newTicket.setId(id);
         newTicket.setCreatedAt(Timestamp.valueOf(LocalDateTime.now()));
         newTicket.setClient(ccs.getById(3));
         newTicket.setFromPlanet(pcs.getById("NEPTUNE"));

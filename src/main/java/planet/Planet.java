@@ -1,10 +1,10 @@
 package planet;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
+import ticket.Ticket;
+
+import java.util.Set;
 
 @Data
 @Entity
@@ -15,4 +15,7 @@ public class Planet {
 
     @Column(name = "name", length = 500)
     private String name;
+/*
+    @OneToMany(mappedBy = "planet")
+    private Set<Ticket> tickets;*/
 }

@@ -7,6 +7,7 @@ import planet.Planet;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Data
 @Entity
@@ -14,7 +15,7 @@ import java.time.LocalDateTime;
 public class Ticket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
+    //@Column(name = "id")
     private long id;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP")

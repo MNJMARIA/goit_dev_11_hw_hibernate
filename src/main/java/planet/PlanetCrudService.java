@@ -25,6 +25,9 @@ public class PlanetCrudService implements IPlanetCrudService{
     @Override
     public Planet getById(String id) {
         try(Session session= HibernateUtil.getInstance().getSessionFactory().openSession()){
+            if(id == null){
+                return null;
+            }
             return session.get(Planet.class, id);
         }
     }

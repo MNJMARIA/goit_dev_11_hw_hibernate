@@ -30,6 +30,9 @@ public class ClientCrudService implements IClientCrudService{
     @Override
     public Client getById(long id) {
         try(Session session = HibernateUtil.getInstance().getSessionFactory().openSession()){
+            if(id == 0){
+                return null;
+            }
             return session.get(Client.class, id);
         }
     }
